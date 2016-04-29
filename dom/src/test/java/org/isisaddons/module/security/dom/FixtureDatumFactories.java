@@ -3,10 +3,10 @@ package org.isisaddons.module.security.dom;
 import com.danhaywood.java.testsupport.coverage.PojoTester;
 import org.isisaddons.module.security.dom.feature.ApplicationFeature;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureId;
-import org.isisaddons.module.security.dom.permission.ApplicationPermission;
-import org.isisaddons.module.security.dom.role.ApplicationRole;
-import org.isisaddons.module.security.dom.tenancy.ApplicationTenancy;
-import org.isisaddons.module.security.dom.user.ApplicationUser;
+import org.isisaddons.module.security.dom.permission.JdoApplicationPermission;
+import org.isisaddons.module.security.dom.role.JdoApplicationRole;
+import org.isisaddons.module.security.dom.tenancy.JdoApplicationTenancy;
+import org.isisaddons.module.security.dom.user.JdoApplicationUser;
 import org.joda.time.LocalDate;
 
 /**
@@ -28,20 +28,20 @@ public class FixtureDatumFactories {
         return new PojoTester.FixtureDatumFactory<>(ApplicationFeatureId.class, ApplicationFeatureId.newPackage("com.mycompany"), ApplicationFeatureId.newClass("com.mycompany.Foo"), ApplicationFeatureId.newMember("com.mycompany.Foo", "bar"));
     }
 
-    public static PojoTester.FixtureDatumFactory<ApplicationRole> roles() {
-        return new PojoTester.FixtureDatumFactory<>(ApplicationRole.class, new ApplicationRole(), new ApplicationRole());
+    public static PojoTester.FixtureDatumFactory<JdoApplicationRole> roles() {
+        return new PojoTester.FixtureDatumFactory<>(JdoApplicationRole.class, new JdoApplicationRole(), new JdoApplicationRole());
     }
 
-    public static PojoTester.FixtureDatumFactory<ApplicationUser> users() {
-        return new PojoTester.FixtureDatumFactory<>(ApplicationUser.class, new ApplicationUser(), new ApplicationUser());
+    public static PojoTester.FixtureDatumFactory<JdoApplicationUser> users() {
+        return new PojoTester.FixtureDatumFactory<>(JdoApplicationUser.class, new JdoApplicationUser(), new JdoApplicationUser());
     }
 
-    public static PojoTester.FixtureDatumFactory<ApplicationPermission> permissions() {
-        return new PojoTester.FixtureDatumFactory<>(ApplicationPermission.class, new ApplicationPermission(), new ApplicationPermission());
+    public static PojoTester.FixtureDatumFactory<JdoApplicationPermission> permissions() {
+        return new PojoTester.FixtureDatumFactory<>(JdoApplicationPermission.class, new JdoApplicationPermission(), new JdoApplicationPermission());
     }
 
-    public static PojoTester.FixtureDatumFactory<ApplicationTenancy> tenancies() {
-        return new PojoTester.FixtureDatumFactory<>(ApplicationTenancy.class, new ApplicationTenancy(), new ApplicationTenancy());
+    public static PojoTester.FixtureDatumFactory<JdoApplicationTenancy> tenancies() {
+        return new PojoTester.FixtureDatumFactory<>(JdoApplicationTenancy.class, new JdoApplicationTenancy(), new JdoApplicationTenancy());
     }
 
     public static PojoTester.FixtureDatumFactory<ApplicationFeature> features() {

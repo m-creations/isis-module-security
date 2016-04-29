@@ -16,11 +16,12 @@
  */
 package org.isisaddons.module.security.dom.user;
 
-import org.isisaddons.module.security.dom.permission.ApplicationPermissionModeTest;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+
+import org.isisaddons.module.security.dom.permission.ApplicationPermissionModeTest;
 
 public class ApplicationUserStatusTest {
 

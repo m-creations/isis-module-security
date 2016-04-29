@@ -48,17 +48,17 @@ public class ApplicationPermissionRepository {
 
     //region > findByRole (programmatic)
     @Programmatic
-    public List<ApplicationPermission> findByRoleCached(final ApplicationRole role) {
-        return queryResultsCache.execute(new Callable<List<ApplicationPermission>>() {
+    public List<? extends ApplicationPermission> findByRoleCached(final ApplicationRole role) {
+        return queryResultsCache.execute(new Callable<List<? extends ApplicationPermission>>() {
             @Override
-            public List<ApplicationPermission> call() throws Exception {
+            public List<? extends ApplicationPermission> call() throws Exception {
                 return findByRole(role);
             }
         }, ApplicationPermissionRepository.class, "findByRoleCached", role);
     }
 
     @Programmatic
-    public List<ApplicationPermission> findByRole(final ApplicationRole role) {
+    public List<? extends ApplicationPermission> findByRole(final ApplicationRole role) {
         return container.allMatches(
                 new QueryDefault<>(
                         ApplicationPermission.class, "findByRole",
@@ -68,21 +68,21 @@ public class ApplicationPermissionRepository {
 
     //region > findByUser (programmatic)
     @Programmatic
-    public List<ApplicationPermission> findByUserCached(final ApplicationUser user) {
-        return queryResultsCache.execute(new Callable<List<ApplicationPermission>>() {
-            @Override public List<ApplicationPermission> call() throws Exception {
+    public List<? extends ApplicationPermission> findByUserCached(final ApplicationUser user) {
+        return queryResultsCache.execute(new Callable<List<? extends ApplicationPermission>>() {
+            @Override public List<? extends ApplicationPermission> call() throws Exception {
                 return findByUser(user);
             }
         }, ApplicationPermissionRepository.class, "findByUserCached", user);
     }
 
     @Programmatic
-    public List<ApplicationPermission> findByUser(final ApplicationUser user) {
+    public List<? extends ApplicationPermission> findByUser(final ApplicationUser user) {
         final String username = user.getUsername();
         return findByUser(username);
     }
 
-    private List<ApplicationPermission> findByUser(final String username) {
+    private List<? extends ApplicationPermission> findByUser(final String username) {
         return container.allMatches(
                 new QueryDefault<>(
                         ApplicationPermission.class, "findByUser",
@@ -107,8 +107,8 @@ public class ApplicationPermissionRepository {
                 @Override
                 public Map<ApplicationPermissionValue, List<ApplicationPermission>> call() throws Exception {
 
-                    final List<ApplicationPermission> applicationPermissions = findByUser(username);
-                    final ImmutableListMultimap<ApplicationPermissionValue, ApplicationPermission> index = Multimaps
+                    final List<? extends ApplicationPermission> applicationPermissions = findByUser(username);
+                    final ImmutableListMultimap<ApplicationPermissionValue, ApplicationPermission> index = (ImmutableListMultimap<ApplicationPermissionValue, ApplicationPermission>) Multimaps
                             .index(applicationPermissions, ApplicationPermission.Functions.AS_VALUE);
 
                     return Multimaps.asMap(index);
@@ -118,7 +118,7 @@ public class ApplicationPermissionRepository {
             }, ApplicationPermissionRepository.class, "findByUserAndPermissionValue", username);
 
         // now simply return the permission from the required value (if it exists)
-        final List<ApplicationPermission> applicationPermissions = permissions.get(permissionValue);
+        final List<? extends ApplicationPermission> applicationPermissions = permissions.get(permissionValue);
         return applicationPermissions != null && !applicationPermissions.isEmpty()
                     ? applicationPermissions.get(0)
                     : null;
@@ -127,18 +127,18 @@ public class ApplicationPermissionRepository {
 
     //region > findByRoleAndRuleAndFeatureType (programmatic)
     @Programmatic
-    public List<ApplicationPermission> findByRoleAndRuleAndFeatureTypeCached(
+    public List<? extends ApplicationPermission> findByRoleAndRuleAndFeatureTypeCached(
             final ApplicationRole role, final ApplicationPermissionRule rule,
             final ApplicationFeatureType type) {
-        return queryResultsCache.execute(new Callable<List<ApplicationPermission>>() {
-            @Override public List<ApplicationPermission> call() throws Exception {
+        return queryResultsCache.execute(new Callable<List<? extends ApplicationPermission>>() {
+            @Override public List<? extends ApplicationPermission> call() throws Exception {
                 return findByRoleAndRuleAndFeatureType(role, rule, type);
             }
         }, ApplicationPermissionRepository.class, "findByRoleAndRuleAndFeatureTypeCached", role, rule, type);
     }
 
     @Programmatic
-    public List<ApplicationPermission> findByRoleAndRuleAndFeatureType(
+    public List<? extends ApplicationPermission> findByRoleAndRuleAndFeatureType(
             final ApplicationRole role, final ApplicationPermissionRule rule,
             final ApplicationFeatureType type) {
         return container.allMatches(
@@ -180,16 +180,16 @@ public class ApplicationPermissionRepository {
 
     //region > findByFeature (programmatic)
     @Programmatic
-    public List<ApplicationPermission> findByFeatureCached(final ApplicationFeatureId featureId) {
-        return queryResultsCache.execute(new Callable<List<ApplicationPermission>>() {
-            @Override public List<ApplicationPermission> call() throws Exception {
+    public List<? extends ApplicationPermission> findByFeatureCached(final ApplicationFeatureId featureId) {
+        return queryResultsCache.execute(new Callable<List<? extends ApplicationPermission>>() {
+            @Override public List<? extends ApplicationPermission> call() throws Exception {
                 return findByFeature(featureId);
             }
         }, ApplicationPermissionRepository.class, "findByFeatureCached", featureId);
     }
 
     @Programmatic
-    public List<ApplicationPermission> findByFeature(final ApplicationFeatureId featureId) {
+    public List<? extends ApplicationPermission> findByFeature(final ApplicationFeatureId featureId) {
         return container.allMatches(
                 new QueryDefault<>(
                         ApplicationPermission.class, "findByFeature",
@@ -269,7 +269,7 @@ public class ApplicationPermissionRepository {
 
     //region > allPermission (action)
     @Programmatic
-    public List<ApplicationPermission> allPermissions() {
+    public List<? extends ApplicationPermission> allPermissions() {
         return container.allInstances(ApplicationPermission.class);
     }
     //endregion

@@ -16,24 +16,44 @@
  */
 package org.isisaddons.module.security.dom.user;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
 
 import com.google.common.collect.Lists;
 
 import org.apache.isis.applib.DomainObjectContainer;
+import org.apache.isis.applib.annotation.Action;
+import org.apache.isis.applib.annotation.ActionLayout;
+import org.apache.isis.applib.annotation.BookmarkPolicy;
 import org.apache.isis.applib.annotation.DomainService;
+import org.apache.isis.applib.annotation.MemberOrder;
 import org.apache.isis.applib.annotation.NatureOfService;
 import org.apache.isis.applib.annotation.Programmatic;
+import org.apache.isis.applib.annotation.SemanticsOf;
 import org.apache.isis.applib.query.QueryDefault;
+import org.apache.isis.applib.services.jdosupport.IsisJdoSupport;
 import org.apache.isis.applib.services.queryresultscache.QueryResultsCache;
 import org.apache.isis.applib.value.Password;
 
 import org.isisaddons.module.security.dom.password.PasswordEncryptionService;
 import org.isisaddons.module.security.dom.role.ApplicationRole;
 import org.isisaddons.module.security.dom.role.ApplicationRoleRepository;
+import org.isisaddons.module.security.dom.user.ApplicationUserMenu.ActionDomainEvent;
+import org.isisaddons.module.security.util.LDAPUtil;
 
 @SuppressWarnings("UnusedDeclaration")
 @DomainService(
@@ -41,8 +61,14 @@ import org.isisaddons.module.security.dom.role.ApplicationRoleRepository;
         repositoryFor = ApplicationUser.class
 )
 public class ApplicationUserRepository {
+	private boolean isLdapOnly = true;
+    public Map<String, String> properties;
 
-
+    @Programmatic
+    @PostConstruct
+    public void init(final Map<String, String> properties) {
+        this.properties = properties;
+    }
     //region > findOrCreateUserByUsername (programmatic)
 
     /**
@@ -113,7 +139,7 @@ public class ApplicationUserRepository {
     //region > findByName
 
     @Programmatic
-    public List<ApplicationUser> find(final String search) {
+    public List<? extends ApplicationUser> find(final String search) {
         final String regex = String.format("(?i).*%s.*", search.replace("*", ".*").replace("?", "."));
         return container.allMatches(new QueryDefault<>(
                 ApplicationUser.class,
@@ -187,13 +213,20 @@ public class ApplicationUserRepository {
     //region > allUsers
 
     @Programmatic
-    public List<ApplicationUser> allUsers() {
-        return container.allInstances(ApplicationUser.class);
+    public List<? extends ApplicationUser> allUsers() {
+    	if(isLdapOnly){
+    		return listAllUserByReza();
+    	}else{
+	    	PersistenceManager pm = isisJdoSupport.getJdoPersistenceManager();
+			Query q = pm.newQuery("javax.jdo.query.JDOQL", "SELECT FROM " + JdoApplicationUser.class.getName() + " ");
+			return (List<? extends ApplicationUser>) q.execute();
+	//        return container.allInstances(ApplicationUser.class);
+    	}
     }
 
     //endregion
 
-    public List<ApplicationUser> autoComplete(final String search) {
+    public List<? extends ApplicationUser> autoComplete(final String search) {
         if (search != null && search.length() > 0) {
             return find(search);
         }
@@ -209,6 +242,101 @@ public class ApplicationUserRepository {
     @Inject
     ApplicationRoleRepository applicationRoleRepository;
 
+    
+    // region > listAll (action)
+    @Programmatic
+    public List<? extends ApplicationUser> listAllUserByReza() {
+        List<LdapApplicationUser> users = new ArrayList<LdapApplicationUser>();
+        LdapContext ldapContext = null;
+        try {
+            ldapContext = LDAPUtil.getLDAPContext();
+
+            SearchControls sc = new SearchControls();
+            String[] attributeFilter = { "uid", "mail" };
+            sc.setReturningAttributes(attributeFilter);
+            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
+
+            NamingEnumeration<SearchResult> searchResults = ldapContext
+                    .search(properties.get("isis.prime.ldap.userSearchBase"), "(uid=*)", sc);
+
+            while (searchResults.hasMore()) {
+                SearchResult searchResult = (SearchResult) searchResults.next();
+                Attributes attributes = searchResult.getAttributes();
+
+                Attribute emailAttribute = attributes.get("mail");
+                Attribute uidAttribute = attributes.get("uid");
+                LdapApplicationUser appUser = new LdapApplicationUser();
+                appUser.setUsername(uidAttribute != null && uidAttribute.get() != null ? uidAttribute.get().toString() : "");
+                appUser.setFamilyName(extractUserUid(uidAttribute));
+                appUser.setEmailAddress(emailAttribute != null && emailAttribute.get() != null ? emailAttribute.get().toString() : "");
+                users.add(appUser);
+//              if (LOG.isDebugEnabled())
+//                  LOG.debug("User found on LdapRealm: " + uidAttribute);
+            }
+        } catch (NamingException e) {
+//          if (LOG.isErrorEnabled())
+//              LOG.error("LdapRealm operation for searching user's email failed: " + e.getMessage(), e);
+
+        } finally {
+            LDAPUtil.closeLdapContext(ldapContext);
+        }
+        return users;
+    }
+    // endregion
+
+    // region > listAll (action)
+    @Programmatic
+    public ApplicationUser findUserByUid(final String uid) {
+        LdapContext ldapContext = null;
+        LdapApplicationUser user = null;
+        try {
+            ldapContext = LDAPUtil.getLDAPContext();
+
+            SearchControls sc = new SearchControls();
+            String[] attributeFilter = { "uid", "mail" };
+            sc.setReturningAttributes(attributeFilter);
+            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
+
+            NamingEnumeration<SearchResult> searchResults = ldapContext
+                    .search(properties.get("isis.prime.ldap.userSearchBase"), "(uid=" + uid + "*)", sc);
+
+            if (searchResults.hasMore()) {
+                SearchResult searchResult = (SearchResult) searchResults.next();
+                Attributes attributes = searchResult.getAttributes();
+
+                Attribute emailAttribute = attributes.get("mail");
+                Attribute uidAttribute = attributes.get("uid");
+
+                user = new LdapApplicationUser();
+                user.setUsername(uidAttribute != null && uidAttribute.get() != null ? uidAttribute.get().toString() : "");
+                user.setFamilyName(extractUserUid(uidAttribute));
+                user.setEmailAddress(emailAttribute != null && emailAttribute.get() != null ? emailAttribute.get().toString() : "");
+            
+            }
+        } catch (NamingException e) {
+            e.printStackTrace();
+            /*if (LOG.isErrorEnabled())
+                LOG.error("LdapRealm operation for searching user's uid failed: " + e.getMessage(), e);*/
+
+        } finally {
+            LDAPUtil.closeLdapContext(ldapContext);
+        }
+        return user;
+    }
+    // endregion
+
+    /**
+     * @throws NamingException
+     * 
+     */
+    private String extractUserUid(Attribute attrUid) throws NamingException {
+        if (attrUid != null && attrUid.get() != null)
+            return attrUid.getID() + "=" + attrUid.get().toString() + ","
+                    + properties.get("isis.prime.ldap.userSearchBase");
+        else
+            return null;
+    }
+    
     /**
      * Will only be injected to if the programmer has supplied an implementation.  Otherwise
      * this class will install a default implementation in the {@link #getApplicationUserFactory() accessor}.
@@ -224,7 +352,8 @@ public class ApplicationUserRepository {
 
     @Inject
     DomainObjectContainer container;
-
+    @Inject
+    IsisJdoSupport isisJdoSupport;
 
     //endregion
 

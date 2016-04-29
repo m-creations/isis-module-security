@@ -63,7 +63,7 @@ public class ApplicationPermissionMenu {
                 restrictTo = RestrictTo.PROTOTYPING
         )
         @MemberOrder(sequence = "100.50.1")
-        public List<ApplicationPermission> allPermissions() {
+        public List<?  extends ApplicationPermission> allPermissions() {
                 return applicationPermissionRepository.allPermissions();
         }
         //endregion

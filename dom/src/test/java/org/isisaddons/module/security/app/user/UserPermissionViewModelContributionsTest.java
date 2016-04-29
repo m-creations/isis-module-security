@@ -17,6 +17,7 @@ import org.apache.isis.core.unittestsupport.jmocking.JUnitRuleMockery2;
 import org.isisaddons.module.security.dom.feature.ApplicationFeature;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureRepository;
 import org.isisaddons.module.security.dom.user.ApplicationUser;
+import org.isisaddons.module.security.dom.user.JdoApplicationUser;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -38,7 +39,7 @@ public class UserPermissionViewModelContributionsTest {
 
     @Before
     public void setUp() throws Exception {
-        applicationUser = new ApplicationUser();
+        applicationUser = new JdoApplicationUser();
     }
 
     public static class Permissions extends UserPermissionViewModelContributionsTest {

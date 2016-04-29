@@ -16,9 +16,19 @@
  */
 package org.isisaddons.module.security.dom.role;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
 
 import org.apache.isis.applib.annotation.Action;
 import org.apache.isis.applib.annotation.DomainService;
@@ -28,10 +38,14 @@ import org.apache.isis.applib.annotation.NatureOfService;
 import org.apache.isis.applib.annotation.Optionality;
 import org.apache.isis.applib.annotation.Parameter;
 import org.apache.isis.applib.annotation.ParameterLayout;
+import org.apache.isis.applib.annotation.Programmatic;
 import org.apache.isis.applib.annotation.SemanticsOf;
+import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.objectstore.jdo.applib.service.JdoColumnLength;
 
 import org.isisaddons.module.security.SecurityModule;
+import org.isisaddons.module.security.dom.role.ApplicationRoles.AllRolesDomainEvent;
+import org.isisaddons.module.security.util.LDAPUtil;
 
 @DomainService(
         nature = NatureOfService.VIEW_MENU_ONLY
@@ -57,6 +71,14 @@ public class  ApplicationRoleMenu {
     }
     //endregion
 
+	public Map<String, String> properties;
+
+	@Programmatic
+	@PostConstruct
+	public void init(final Map<String, String> properties) {
+		this.properties = properties;
+	}
+	
     //region > findRoles
     public static class FindRolesDomainEvent extends ActionDomainEvent {}
 
@@ -65,7 +87,7 @@ public class  ApplicationRoleMenu {
             semantics = SemanticsOf.SAFE
     )
     @MemberOrder(sequence = "100.20.1")
-    public List<ApplicationRole> findRoles(
+    public List<? extends ApplicationRole> findRoles(
             @Parameter(maxLength = ApplicationRole.MAX_LENGTH_NAME)
             @ParameterLayout(named = "Search", typicalLength = ApplicationRole.TYPICAL_LENGTH_NAME)
             final String search) {
@@ -100,11 +122,80 @@ public class  ApplicationRoleMenu {
             semantics = SemanticsOf.SAFE
     )
     @MemberOrder(sequence = "100.20.3")
-    public List<ApplicationRole> allRoles() {
+    public List<? extends ApplicationRole> allRoles() {
         return applicationRoleRepository.allRoles();
     }
     //endregion
 
+    
+ // region > ListAllRoleByRezaDomainEvent (action)
+    public static class ListAllRoleByRezaDomainEvent extends ActionDomainEvent {}
+    @Action(
+            domainEvent = ListAllRoleByRezaDomainEvent.class,
+            semantics = SemanticsOf.SAFE
+    )
+    @MemberOrder(sequence = "100.20.4")
+ 	public List<ApplicationRoleV> listAllRoleByReza() {
+ 		List<ApplicationRoleV> roles = new ArrayList<ApplicationRoleV>();
+ 		LdapContext ldapContext = null;
+ 		try {
+ 			ldapContext = LDAPUtil.getLDAPContext();
+
+ 			SearchControls sc = new SearchControls();
+ 			String[] attributeFilter = { "cn", "roleOccupant" };
+ 			sc.setReturningAttributes(attributeFilter);
+ 			sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
+
+ 			NamingEnumeration<SearchResult> searchResults = ldapContext
+ 					.search(properties.get("isis.prime.ldap.groupSearchBase"), "(cn=*)", sc);
+
+ 			while (searchResults.hasMore()) {
+ 				SearchResult searchResult = (SearchResult) searchResults.next();
+ 				Attributes attributes = searchResult.getAttributes();
+
+ 				Attribute cnAttribute = attributes.get("cn");
+ 				Attribute roleOccupantAttribute = attributes.get("roleOccupant");
+ 				ApplicationRoleV appRole = new ApplicationRoleV();
+ 				appRole.setName(extractRoleName(cnAttribute));
+ 				appRole.setDescription(appRole.getName());
+ 						/*new AppRole(
+ 						cnAttribute != null && cnAttribute.get() != null ? cnAttribute.get().toString() : "",
+ 						extractRoleName(cnAttribute), mementoService);*/
+ 				/*Set<String> roleOccupantsSet = new HashSet<String>();
+ 				if (roleOccupantAttribute != null) {
+ 					NamingEnumeration<?> all = roleOccupantAttribute.getAll();
+ 					while (all != null && all.hasMore()) {
+ 						Object next = all.next();
+ 						roleOccupantsSet.add(userManagement.findUserByUid((String) next));
+ 					}
+ 				}*/
+ 				// appRole.setMembers(roleOccupantsSet.toArray(new
+ 				// AppUser[]{}));
+ 				/*appRole.setMembers(roleOccupantsSet);*/
+ 				roles.add(appRole);
+ 				/*if (LOG.isInfoEnabled())
+ 					LOG.info("Role found on LdapRealm: " + appRole);*/
+ 			}
+ 		} catch (NamingException e) {
+ 			e.printStackTrace();
+ 			/*if (LOG.isErrorEnabled())
+ 				LOG.error("LdapRealm operation for searching user's email failed: " + e.getMessage(), e);*/
+
+ 		} finally {
+ 			LDAPUtil.closeLdapContext(ldapContext);
+ 		}
+ 		return roles;
+ 	}
+	/**
+	 * 
+	 */
+	private String extractRoleName(Attribute attr) throws NamingException {
+		if (attr != null && attr.get() != null)
+			return attr.getID() + "=" + attr.get().toString() + "," + properties.get("isis.prime.ldap.groupSearchBase");
+		else
+			return null;
+	}
+ 	// endregion
     @Inject
     ApplicationRoleRepository applicationRoleRepository;
 }

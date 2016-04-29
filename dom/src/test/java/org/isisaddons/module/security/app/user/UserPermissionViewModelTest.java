@@ -15,14 +15,15 @@ import org.apache.isis.applib.ViewModel;
 import org.apache.isis.core.unittestsupport.jmocking.JUnitRuleMockery2;
 
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureId;
-import org.isisaddons.module.security.dom.permission.ApplicationPermission;
+import org.isisaddons.module.security.dom.permission.JdoApplicationPermission;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionMode;
+import org.isisaddons.module.security.dom.permission.ApplicationPermissionRepository;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionRepository;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionRule;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionValue;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionValueSet;
-import org.isisaddons.module.security.dom.role.ApplicationRole;
-import org.isisaddons.module.security.dom.user.ApplicationUser;
+import org.isisaddons.module.security.dom.role.JdoApplicationRole;
+import org.isisaddons.module.security.dom.user.JdoApplicationUser;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -47,7 +48,7 @@ public class UserPermissionViewModelTest {
     public static class ViewModelRoundtrip extends UserPermissionViewModelTest {
 
         @Mock
-        private ApplicationUser mockApplicationUser;
+        private JdoApplicationUser mockJdoApplicationUser;
         @Mock
         private DomainObjectContainer mockContainer;
         @Mock
@@ -65,9 +66,9 @@ public class UserPermissionViewModelTest {
             final ApplicationPermissionRule viewingRule = ApplicationPermissionRule.ALLOW;
             final ApplicationPermissionMode viewingMode = ApplicationPermissionMode.CHANGING;
 
-            final ApplicationRole viewingRole = new ApplicationRole();
+            final JdoApplicationRole viewingRole = new JdoApplicationRole();
             viewingRole.setName("allowChangingComMycompany");
-            final ApplicationPermission viewingPermission = new ApplicationPermission();
+            final JdoApplicationPermission viewingPermission = new JdoApplicationPermission();
             viewingPermission.setRole(viewingRole);
             viewingPermission.setRule(viewingRule);
             viewingPermission.setMode(viewingMode);
@@ -79,9 +80,9 @@ public class UserPermissionViewModelTest {
             final ApplicationPermissionRule changingRule = ApplicationPermissionRule.VETO;
             final ApplicationPermissionMode changingMode = ApplicationPermissionMode.CHANGING;
 
-            final ApplicationRole changingRole = new ApplicationRole();
+            final JdoApplicationRole changingRole = new JdoApplicationRole();
             changingRole.setName("vetoChangingComMycompanyBar");
-            final ApplicationPermission changingPermission = new ApplicationPermission();
+            final JdoApplicationPermission changingPermission = new JdoApplicationPermission();
             changingPermission.setRole(changingRole);
             changingPermission.setRule(changingRule);
             changingPermission.setMode(changingMode);
@@ -99,7 +100,7 @@ public class UserPermissionViewModelTest {
 
             // and given
             context.checking(new Expectations() {{
-                allowing(mockApplicationUser).getUsername();
+                allowing(mockJdoApplicationUser).getUsername();
                 will(returnValue("fred"));
 
                 allowing(mockContainer).newViewModelInstance(with(any(Class.class)), with(any(String.class)));
@@ -110,7 +111,7 @@ public class UserPermissionViewModelTest {
                     new ApplicationPermissionValue(viewingFeatureId, viewingRule, viewingMode), true);
             ApplicationPermissionValueSet.Evaluation changingEvaluation = new ApplicationPermissionValueSet.Evaluation(
                     new ApplicationPermissionValue(changingFeatureId, changingRule, changingMode), false);
-            UserPermissionViewModel upvm = UserPermissionViewModel.newViewModel(targetFeatureId, mockApplicationUser, viewingEvaluation, changingEvaluation, mockContainer);
+            UserPermissionViewModel upvm = UserPermissionViewModel.newViewModel(targetFeatureId, mockJdoApplicationUser, viewingEvaluation, changingEvaluation, mockContainer);
 
 
             // when

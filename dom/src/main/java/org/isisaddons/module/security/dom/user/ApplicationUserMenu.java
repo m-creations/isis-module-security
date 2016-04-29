@@ -16,11 +16,23 @@
  */
 package org.isisaddons.module.security.dom.user;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
 
 import org.apache.isis.applib.annotation.Action;
+import org.apache.isis.applib.annotation.ActionLayout;
+import org.apache.isis.applib.annotation.BookmarkPolicy;
 import org.apache.isis.applib.annotation.DomainService;
 import org.apache.isis.applib.annotation.DomainServiceLayout;
 import org.apache.isis.applib.annotation.MemberOrder;
@@ -28,7 +40,9 @@ import org.apache.isis.applib.annotation.NatureOfService;
 import org.apache.isis.applib.annotation.Optionality;
 import org.apache.isis.applib.annotation.Parameter;
 import org.apache.isis.applib.annotation.ParameterLayout;
+import org.apache.isis.applib.annotation.Programmatic;
 import org.apache.isis.applib.annotation.SemanticsOf;
+import org.apache.isis.applib.services.memento.MementoService;
 import org.apache.isis.applib.value.Password;
 
 import org.isisaddons.module.security.SecurityModule;
@@ -37,6 +51,8 @@ import org.isisaddons.module.security.dom.role.ApplicationRoleRepository;
 import org.isisaddons.module.security.seed.scripts.IsisModuleSecurityRegularUserRoleAndPermissions;
 import org.isisaddons.module.security.shiro.IsisModuleSecurityRealm;
 import org.isisaddons.module.security.shiro.ShiroUtils;
+import org.isisaddons.module.security.util.LDAPUtil;
+
 
 @DomainService(
         nature = NatureOfService.VIEW_MENU_ONLY
@@ -62,6 +78,14 @@ public class ApplicationUserMenu {
     }
     //endregion
 
+	public Map<String, String> properties;
+
+	@Programmatic
+	@PostConstruct
+	public void init(final Map<String, String> properties) {
+		this.properties = properties;
+	}
+
     //region > identification
     public String iconName() {
         return "applicationUser";
@@ -74,7 +98,7 @@ public class ApplicationUserMenu {
             semantics = SemanticsOf.SAFE
     )
     @MemberOrder(sequence = "100.10.2")
-    public List<ApplicationUser> findUsers(
+    public List<? extends ApplicationUser> findUsers(
             final @ParameterLayout(named = "Search") String search) {
         return applicationUserRepository.find(search);
     }
@@ -169,7 +193,7 @@ public class ApplicationUserMenu {
             semantics = SemanticsOf.SAFE
     )
     @MemberOrder(sequence = "100.10.5")
-    public List<ApplicationUser> allUsers() {
+    public List<? extends ApplicationUser> allUsers() {
         return applicationUserRepository.allUsers();
     }
     //endregion
@@ -181,7 +205,11 @@ public class ApplicationUserMenu {
     }
     //endregion
 
+
     //region  > injected
+    @Inject
+    MementoService MementoService;
+
     @Inject
     ApplicationRoleRepository applicationRoleRepository;
 

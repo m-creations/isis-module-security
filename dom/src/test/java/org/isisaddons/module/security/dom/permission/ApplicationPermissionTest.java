@@ -38,7 +38,7 @@ import org.isisaddons.module.security.dom.feature.ApplicationFeatureId;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureRepository;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureType;
 import org.isisaddons.module.security.dom.feature.ApplicationMemberType;
-import org.isisaddons.module.security.dom.role.ApplicationRole;
+import org.isisaddons.module.security.dom.role.JdoApplicationRole;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -58,11 +58,11 @@ public class ApplicationPermissionTest {
     @Mock
     ApplicationFeatureRepository mockApplicationFeatureRepository;
 
-    ApplicationPermission applicationPermission;
+    JdoApplicationPermission applicationPermission;
 
     @Before
     public void setUp() throws Exception {
-        applicationPermission = new ApplicationPermission();
+        applicationPermission = new JdoApplicationPermission();
         applicationPermission.container = mockContainer;
     }
 
@@ -112,7 +112,7 @@ public class ApplicationPermissionTest {
 
         @Test
         public void forFunctions() throws Exception {
-            new PrivateConstructorTester(ApplicationPermission.Functions.class).exercise();
+            new PrivateConstructorTester(JdoApplicationPermission.Functions.class).exercise();
         }
 
     }
@@ -124,25 +124,25 @@ public class ApplicationPermissionTest {
         public void exercise() throws Exception {
             PojoTester.relaxed()
                     .withFixture(roles())
-                    .exercise(new ApplicationPermission());
+                    .exercise(new JdoApplicationPermission());
         }
 
     }
 
-    public static class ValueTypeContractTest extends ValueTypeContractTestAbstract<ApplicationPermission> {
-        private ApplicationRole role1;
-        private ApplicationRole role2;
+    public static class ValueTypeContractTest extends ValueTypeContractTestAbstract<JdoApplicationPermission> {
+        private JdoApplicationRole role1;
+        private JdoApplicationRole role2;
 
         @Before
         public void setUp() throws Exception {
-            role1 = new ApplicationRole();
+            role1 = new JdoApplicationRole();
             role1.setName("role1");
-            role2 = new ApplicationRole();
+            role2 = new JdoApplicationRole();
             role2.setName("role2");
         }
 
         @Override
-        protected List<ApplicationPermission> getObjectsWithSameValue() {
+        protected List<JdoApplicationPermission> getObjectsWithSameValue() {
             return Arrays.asList(
                     perm(role1, ApplicationFeatureType.MEMBER, "com.mycompany.Bar#foo", ApplicationPermissionMode.CHANGING),
                     perm(role1, ApplicationFeatureType.MEMBER, "com.mycompany.Bar#foo", ApplicationPermissionMode.CHANGING)
@@ -150,7 +150,7 @@ public class ApplicationPermissionTest {
         }
 
         @Override
-        protected List<ApplicationPermission> getObjectsWithDifferentValue() {
+        protected List<JdoApplicationPermission> getObjectsWithDifferentValue() {
             return Arrays.asList(
                     perm(role2, ApplicationFeatureType.MEMBER, "com.mycompany.Bar#foo", ApplicationPermissionMode.CHANGING),
                     perm(role1, ApplicationFeatureType.CLASS, "com.mycompany.Bar#foo", ApplicationPermissionMode.CHANGING),
@@ -159,8 +159,8 @@ public class ApplicationPermissionTest {
             );
         }
 
-        private static ApplicationPermission perm(ApplicationRole role, ApplicationFeatureType featureType, String fqn, ApplicationPermissionMode mode) {
-            final ApplicationPermission permission = new ApplicationPermission();
+        private static JdoApplicationPermission perm(JdoApplicationRole role, ApplicationFeatureType featureType, String fqn, ApplicationPermissionMode mode) {
+            final JdoApplicationPermission permission = new JdoApplicationPermission();
             permission.setRole(role);
             permission.setFeatureType(featureType);
             permission.setFeatureFqn(fqn);
@@ -177,7 +177,7 @@ public class ApplicationPermissionTest {
 
             @Test
             public void happyCase() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
 
                 applicationPermission.viewing();
                 assertThat(applicationPermission.getMode(), is(ApplicationPermissionMode.VIEWING));
@@ -188,7 +188,7 @@ public class ApplicationPermissionTest {
 
             @Before
             public void setUp() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
             }
 
             @Test
@@ -213,7 +213,7 @@ public class ApplicationPermissionTest {
 
             @Test
             public void happyCase() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
 
                 applicationPermission.changing();
                 assertThat(applicationPermission.getMode(), is(ApplicationPermissionMode.CHANGING));
@@ -224,7 +224,7 @@ public class ApplicationPermissionTest {
 
             @Before
             public void setUp() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
             }
 
             @Test
@@ -250,7 +250,7 @@ public class ApplicationPermissionTest {
 
             @Test
             public void happyCase() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
 
                 applicationPermission.allow();
                 assertThat(applicationPermission.getRule(), is(ApplicationPermissionRule.ALLOW));
@@ -261,7 +261,7 @@ public class ApplicationPermissionTest {
 
             @Before
             public void setUp() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
             }
 
             @Test
@@ -287,7 +287,7 @@ public class ApplicationPermissionTest {
 
             @Test
             public void happyCase() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
 
                 applicationPermission.veto();
                 assertThat(applicationPermission.getRule(), is(ApplicationPermissionRule.VETO));
@@ -298,7 +298,7 @@ public class ApplicationPermissionTest {
 
             @Before
             public void setUp() throws Exception {
-                applicationPermission = new ApplicationPermission();
+                applicationPermission = new JdoApplicationPermission();
             }
 
             @Test
@@ -326,7 +326,7 @@ public class ApplicationPermissionTest {
 
         @Before
         public void setUp() throws Exception {
-            applicationPermission = new ApplicationPermission();
+            applicationPermission = new JdoApplicationPermission();
             applicationPermission.applicationFeatureRepository = mockApplicationFeatureRepository;
         }
 
@@ -390,7 +390,7 @@ public class ApplicationPermissionTest {
 
             // when, then
             assertThat(
-                    ApplicationPermission.Functions.AS_VALUE.apply(applicationPermission),
+                    JdoApplicationPermission.Functions.AS_VALUE.apply(applicationPermission),
                     is(new ApplicationPermissionValue(
                             ApplicationFeatureId.newMember("com.mycompany.Foo#bar"),
                             ApplicationPermissionRule.ALLOW,
@@ -401,18 +401,18 @@ public class ApplicationPermissionTest {
         public void GET_FQN() throws Exception {
             applicationPermission.setFeatureFqn("com.mycompany.Foo#bar");
 
-            assertThat(ApplicationPermission.Functions.GET_FQN.apply(applicationPermission), is("com.mycompany.Foo#bar"));
+            assertThat(JdoApplicationPermission.Functions.GET_FQN.apply(applicationPermission), is("com.mycompany.Foo#bar"));
         }
     }
 
     public static class Title extends ApplicationPermissionTest {
 
-        private ApplicationRole applicationRole;
+        private JdoApplicationRole applicationRole;
 
         @Before
         public void setUp() throws Exception {
-            applicationPermission = new ApplicationPermission();
-            applicationRole = new ApplicationRole();
+            applicationPermission = new JdoApplicationPermission();
+            applicationRole = new JdoApplicationRole();
             applicationRole.setName("Role1");
             applicationPermission.setRole(applicationRole);
         }

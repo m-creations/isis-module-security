@@ -64,7 +64,7 @@ public class ApplicationPermissions {
      */
     @Deprecated
     @Programmatic
-    public List<ApplicationPermission> findByRole(final ApplicationRole role) {
+    public List<? extends ApplicationPermission> findByRole(final ApplicationRole role) {
         return applicationPermissionRepository.findByRole(role);
     }
     //endregion
@@ -76,7 +76,7 @@ public class ApplicationPermissions {
      */
     @Deprecated
     @Programmatic
-    public List<ApplicationPermission> findByUser(final ApplicationUser user) {
+    public List<? extends ApplicationPermission> findByUser(final ApplicationUser user) {
         return applicationPermissionRepository.findByUser(user);
     }
 
@@ -100,7 +100,7 @@ public class ApplicationPermissions {
      */
     @Deprecated
     @Programmatic
-    public List<ApplicationPermission> findByRoleAndRuleAndFeatureType(
+    public List<? extends ApplicationPermission> findByRoleAndRuleAndFeatureType(
             final ApplicationRole role, final ApplicationPermissionRule rule,
             final ApplicationFeatureType type) {
         return applicationPermissionRepository.findByRoleAndRuleAndFeatureType(role, rule, type);
@@ -126,7 +126,7 @@ public class ApplicationPermissions {
      */
     @Deprecated
     @Programmatic
-    public List<ApplicationPermission> findByFeature(final ApplicationFeatureId featureId) {
+    public List<? extends ApplicationPermission> findByFeature(final ApplicationFeatureId featureId) {
         return applicationPermissionRepository.findByFeature(featureId);
     }
     //endregion
@@ -189,7 +189,7 @@ public class ApplicationPermissions {
             semantics = SemanticsOf.SAFE,
             restrictTo = RestrictTo.PROTOTYPING
     )
-    public List<ApplicationPermission> allPermissions() {
+    public List<? extends ApplicationPermission> allPermissions() {
         return applicationPermissionRepository.allPermissions();
     }
     //endregion

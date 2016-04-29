@@ -34,11 +34,11 @@ public class ApplicationUserTest {
     @Rule
     public JUnitRuleMockery2 context = JUnitRuleMockery2.createFor(JUnitRuleMockery2.Mode.INTERFACES_AND_CLASSES);
 
-    ApplicationUser applicationUser;
+    JdoApplicationUser applicationUser;
 
     @Before
     public void setUp() throws Exception {
-        applicationUser = new ApplicationUser();
+        applicationUser = new JdoApplicationUser();
     }
 
     public static class Title extends ApplicationUserTest {
@@ -182,7 +182,7 @@ public class ApplicationUserTest {
 
         private ApplicationUser newApplicationUser(
                 String username) {
-            final ApplicationUser applicationUser = new ApplicationUser();
+            final JdoApplicationUser applicationUser = new JdoApplicationUser();
             applicationUser.setUsername(username);
             return applicationUser;
         }
@@ -195,7 +195,7 @@ public class ApplicationUserTest {
         public void exercise() throws Exception {
             PojoTester.relaxed()
                     .withFixture(tenancies())
-                    .exercise(new ApplicationUser());
+                    .exercise(new JdoApplicationUser());
         }
 
     }

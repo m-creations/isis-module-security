@@ -16,22 +16,41 @@
  */
 package org.isisaddons.module.security.dom.role;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
 
 import org.apache.isis.applib.AbstractFactoryAndRepository;
 import org.apache.isis.applib.annotation.Action;
+import org.apache.isis.applib.annotation.ActionLayout;
+import org.apache.isis.applib.annotation.BookmarkPolicy;
 import org.apache.isis.applib.annotation.DomainService;
+import org.apache.isis.applib.annotation.MemberOrder;
 import org.apache.isis.applib.annotation.NatureOfService;
 import org.apache.isis.applib.annotation.Optionality;
 import org.apache.isis.applib.annotation.Parameter;
 import org.apache.isis.applib.annotation.ParameterLayout;
+import org.apache.isis.applib.annotation.Programmatic;
 import org.apache.isis.applib.annotation.SemanticsOf;
 import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.objectstore.jdo.applib.service.JdoColumnLength;
 
 import org.isisaddons.module.security.SecurityModule;
+import org.isisaddons.module.security.util.LDAPUtil;
+
+
 
 /**
  * @deprecated - use {@link ApplicationRoleRepository} or {@link ApplicationRoleMenu} instead.
@@ -54,6 +73,14 @@ public class ApplicationRoles extends AbstractFactoryAndRepository {
     }
     //endregion
 
+	public Map<String, String> properties;
+
+	@Programmatic
+	@PostConstruct
+	public void init(final Map<String, String> properties) {
+		this.properties = properties;
+	}
+	
     //region > findRoleByName
     public static class FindByRoleNameDomainEvent extends ActionDomainEvent {}
 
@@ -113,6 +140,9 @@ public class ApplicationRoles extends AbstractFactoryAndRepository {
         return applicationRoleRepository.allRoles();
     }
     //endregion
+
+ 
+
 
     //region > injected
     @Inject

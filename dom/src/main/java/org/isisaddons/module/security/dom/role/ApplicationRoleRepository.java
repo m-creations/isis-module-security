@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import com.google.common.collect.Lists;
 
@@ -28,6 +30,7 @@ import org.apache.isis.applib.annotation.DomainService;
 import org.apache.isis.applib.annotation.NatureOfService;
 import org.apache.isis.applib.annotation.Programmatic;
 import org.apache.isis.applib.query.QueryDefault;
+import org.apache.isis.applib.services.jdosupport.IsisJdoSupport;
 import org.apache.isis.applib.services.queryresultscache.QueryResultsCache;
 
 @DomainService(
@@ -49,11 +52,11 @@ public class ApplicationRoleRepository  {
     }
 
     @Programmatic
-    public ApplicationRole findByName(final String name) {
+    public JdoApplicationRole findByName(final String name) {
         if(name == null) {
             return null;
         }
-        return container.uniqueMatch(new QueryDefault<>(ApplicationRole.class, "findByName", "name", name));
+        return container.uniqueMatch(new QueryDefault<>(JdoApplicationRole.class, "findByName", "name", name));
     }
 
     @Programmatic
@@ -88,8 +91,11 @@ public class ApplicationRoleRepository  {
     //region > allRoles
 
     @Programmatic
-    public List<ApplicationRole> allRoles() {
-        return container.allInstances(ApplicationRole.class);
+    public List<JdoApplicationRole> allRoles() {
+    	PersistenceManager pm = isisJdoSupport.getJdoPersistenceManager();
+		Query q = pm.newQuery("javax.jdo.query.JDOQL", "SELECT FROM " + JdoApplicationRole.class.getName() + " ");
+		return (List<JdoApplicationRole>) q.execute();
+//        return container.allInstances(ApplicationRole.class);
     }
 
     //endregion
@@ -113,6 +119,8 @@ public class ApplicationRoleRepository  {
 
     @Inject
     QueryResultsCache queryResultsCache;
+    @Inject
+    IsisJdoSupport isisJdoSupport;
     //endregion
 
     //region > findByName

@@ -136,7 +136,7 @@ public class ApplicationTenancies {
             hidden = Where.EVERYWHERE
     )
     @MemberOrder(sequence = "100.30.4")
-    public List<ApplicationTenancy> allTenancies() {
+    public List<? extends ApplicationTenancy> allTenancies() {
         return applicationTenancyRepository.allTenancies();
     }
     //endregion

@@ -32,27 +32,27 @@ import org.apache.isis.applib.services.queryresultscache.QueryResultsCache;
 
 @DomainService(
         nature = NatureOfService.DOMAIN,
-        repositoryFor = ApplicationTenancy.class
+        repositoryFor = JdoApplicationTenancy.class
 )
 public class ApplicationTenancyRepository {
 
     //region > findByNameOrPathMatching
 
     @Programmatic
-    public List<ApplicationTenancy> findByNameOrPathMatchingCached(final String search) {
-        return queryResultsCache.execute(new Callable<List<ApplicationTenancy>>() {
-            @Override public List<ApplicationTenancy> call() throws Exception {
+    public List<? extends ApplicationTenancy> findByNameOrPathMatchingCached(final String search) {
+        return queryResultsCache.execute(new Callable<List<? extends ApplicationTenancy>>() {
+            @Override public List<? extends ApplicationTenancy> call() throws Exception {
                 return findByNameOrPathMatching(search);
             }
         }, ApplicationTenancyRepository.class, "findByNameOrPathMatchingCached", search);
     }
 
     @Programmatic
-    public List<ApplicationTenancy> findByNameOrPathMatching(final String search) {
+    public List<? extends ApplicationTenancy> findByNameOrPathMatching(final String search) {
         if (search == null) {
             return Lists.newArrayList();
         }
-        return container.allMatches(new QueryDefault<>(ApplicationTenancy.class, "findByNameOrPathMatching", "regex", String.format("(?i).*%s.*", search.replace("*", ".*").replace("?", "."))));
+        return container.allMatches(new QueryDefault<>(JdoApplicationTenancy.class, "findByNameOrPathMatching", "regex", String.format("(?i).*%s.*", search.replace("*", ".*").replace("?", "."))));
     }
 
     //endregion
@@ -70,7 +70,7 @@ public class ApplicationTenancyRepository {
 
     @Programmatic
     public ApplicationTenancy findByName(final String name) {
-        return container.uniqueMatch(new QueryDefault<>(ApplicationTenancy.class, "findByName", "name", name));
+        return container.uniqueMatch(new QueryDefault<>(JdoApplicationTenancy.class, "findByName", "name", name));
     }
     //endregion
 
@@ -91,13 +91,13 @@ public class ApplicationTenancyRepository {
         if (path == null) {
             return null;
         }
-        return container.uniqueMatch(new QueryDefault<>(ApplicationTenancy.class, "findByPath", "path", path));
+        return container.uniqueMatch(new QueryDefault<>(JdoApplicationTenancy.class, "findByPath", "path", path));
     }
     //endregion
 
     //region > autoComplete
 
-    public List<ApplicationTenancy> autoComplete(final String search) {
+    public List<? extends ApplicationTenancy> autoComplete(final String search) {
         if (search != null && search.length() > 0) {
             return findByNameOrPathMatching(search);
         }
@@ -127,18 +127,18 @@ public class ApplicationTenancyRepository {
 
     //region > allTenancies
     @Programmatic
-    public List<ApplicationTenancy> allTenancies() {
-        return queryResultsCache.execute(new Callable<List<ApplicationTenancy>>() {
+    public List<? extends ApplicationTenancy> allTenancies() {
+        return queryResultsCache.execute(new Callable<List<? extends ApplicationTenancy>>() {
             @Override
-            public List<ApplicationTenancy> call() throws Exception {
+            public List<? extends ApplicationTenancy> call() throws Exception {
                 return allTenanciesNoCache();
             }
         }, ApplicationTenancyRepository.class, "allTenancies");
     }
 
     @Programmatic
-    public List<ApplicationTenancy> allTenanciesNoCache() {
-        return container.allInstances(ApplicationTenancy.class);
+    public List<? extends ApplicationTenancy> allTenanciesNoCache() {
+        return container.allInstances(JdoApplicationTenancy.class);
     }
 
     //endregion

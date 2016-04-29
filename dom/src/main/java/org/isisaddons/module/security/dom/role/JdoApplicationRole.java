@@ -20,11 +20,22 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.IdentityType;
+import javax.jdo.annotations.InheritanceStrategy;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+
 import org.apache.isis.applib.DomainObjectContainer;
 import org.apache.isis.applib.annotation.Action;
 import org.apache.isis.applib.annotation.ActionLayout;
+import org.apache.isis.applib.annotation.BookmarkPolicy;
 import org.apache.isis.applib.annotation.Collection;
 import org.apache.isis.applib.annotation.CollectionLayout;
+import org.apache.isis.applib.annotation.DomainObject;
+import org.apache.isis.applib.annotation.DomainObjectLayout;
 import org.apache.isis.applib.annotation.Editing;
 import org.apache.isis.applib.annotation.MemberOrder;
 import org.apache.isis.applib.annotation.Optionality;
@@ -37,6 +48,7 @@ import org.apache.isis.applib.annotation.RenderType;
 import org.apache.isis.applib.annotation.SemanticsOf;
 import org.apache.isis.applib.util.ObjectContracts;
 import org.apache.isis.objectstore.jdo.applib.service.JdoColumnLength;
+
 import org.isisaddons.module.security.SecurityModule;
 import org.isisaddons.module.security.dom.feature.ApplicationFeature;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureRepository;
@@ -46,24 +58,46 @@ import org.isisaddons.module.security.dom.permission.ApplicationPermission;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionMode;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionRepository;
 import org.isisaddons.module.security.dom.permission.ApplicationPermissionRule;
+import org.isisaddons.module.security.dom.permission.JdoApplicationPermission;
 import org.isisaddons.module.security.dom.user.ApplicationUser;
 import org.isisaddons.module.security.dom.user.ApplicationUserRepository;
 import org.isisaddons.module.security.seed.scripts.IsisModuleSecurityAdminRoleAndPermissions;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-
 @SuppressWarnings("UnusedDeclaration")
-public class ApplicationRole implements Comparable<ApplicationRole> {
-
-    public static abstract class PropertyDomainEvent<T> extends SecurityModule.PropertyDomainEvent<ApplicationRole, T> {}
-
-    public static abstract class CollectionDomainEvent<T> extends SecurityModule.CollectionDomainEvent<ApplicationRole, T> {}
-
-    public static abstract class ActionDomainEvent extends SecurityModule.ActionDomainEvent<ApplicationRole> {}
-
-    // //////////////////////////////////////
+@javax.jdo.annotations.PersistenceCapable(
+        identityType = IdentityType.DATASTORE,
+        schema = "isissecurity",
+        table = "ApplicationRole")
+@javax.jdo.annotations.Inheritance(
+        strategy = InheritanceStrategy.NEW_TABLE)
+@javax.jdo.annotations.DatastoreIdentity(
+        strategy = IdGeneratorStrategy.NATIVE, column = "id")
+@javax.jdo.annotations.Uniques({
+        @javax.jdo.annotations.Unique(
+                name = "ApplicationRole_name_UNQ", members = { "name" })
+})
+@javax.jdo.annotations.Queries({
+        @javax.jdo.annotations.Query(
+                name = "findByName", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.role.JdoApplicationRole "
+                        + "WHERE name == :name"),
+        @javax.jdo.annotations.Query(
+                name = "findByNameContaining", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.role.JdoApplicationRole "
+                        + "WHERE name.matches(:nameRegex) ")
+})
+@DomainObject(
+        bounded = true,
+        objectType = "isissecurity.ApplicationRole",
+        autoCompleteRepository = ApplicationRoleRepository.class,
+        autoCompleteAction = "autoComplete"
+)
+@DomainObjectLayout(
+        bookmarking = BookmarkPolicy.AS_ROOT
+)
+public class JdoApplicationRole extends ApplicationRole {
 
     //region > constants
 
@@ -84,10 +118,8 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
 
     //region > name (property)
 
-    public static class NameDomainEvent extends PropertyDomainEvent<String> {}
 
-    protected String name;
-
+    @javax.jdo.annotations.Column(allowsNull="false", length = MAX_LENGTH_NAME)
     @Property(
             domainEvent = NameDomainEvent.class,
             editing = Editing.DISABLED
@@ -97,23 +129,18 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     public String getName() {
         return name;
     }
-
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     //endregion
 
     //region > updateName (action)
 
-    public static class UpdateNameDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateNameDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="name", sequence = "1")
-    public ApplicationRole updateName(
+    public JdoApplicationRole updateName(
             @Parameter(maxLength = MAX_LENGTH_NAME) @ParameterLayout(named="Name", typicalLength = TYPICAL_LENGTH_NAME)
             final String name) {
         setName(name);
@@ -128,10 +155,9 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
 
     //region > description (property)
 
-    public static class DescriptionDomainEvent extends PropertyDomainEvent<String> {}
 
-    protected String description;
 
+    @javax.jdo.annotations.Column(allowsNull="true", length = JdoColumnLength.DESCRIPTION)
     @Property(
             domainEvent = DescriptionDomainEvent.class,
             editing = Editing.DISABLED
@@ -144,22 +170,19 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
 
     //endregion
 
     //region > updateDescription (action)
 
-    public static class UpdateDescriptionDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateDescriptionDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="description", sequence = "1")
-    public ApplicationRole updateDescription(
+    public JdoApplicationRole updateDescription(
             @Parameter(
                     maxLength = JdoColumnLength.DESCRIPTION,
                     optionality = Optionality.OPTIONAL
@@ -177,14 +200,14 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //endregion
 
     //region > permissions (derived collection)
-    public static class PermissionsCollectionDomainEvent extends CollectionDomainEvent<ApplicationPermission> {}
+
 
     @Collection(
             domainEvent = PermissionsCollectionDomainEvent.class
     )
     @CollectionLayout(
             render = RenderType.EAGERLY,
-            sortedBy = ApplicationPermission.DefaultComparator.class
+            sortedBy = JdoApplicationPermission.DefaultComparator.class
     )
     @MemberOrder(sequence = "10")
     public List<?  extends ApplicationPermission> getPermissions() {
@@ -194,7 +217,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
 
     //region > addPackage (action)
 
-    public static class AddPackageDomainEvent extends ActionDomainEvent {}
+
 
     /**
      * Adds a {@link org.isisaddons.module.security.dom.permission.ApplicationPermission permission} for this role to a
@@ -206,7 +229,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
             semantics = SemanticsOf.NON_IDEMPOTENT
     )
     @MemberOrder(name = "Permissions", sequence = "1")
-    public ApplicationRole addPackage(
+    public JdoApplicationRole addPackage(
             @ParameterLayout(named="Rule")
             final ApplicationPermissionRule rule,
             @ParameterLayout(named="Mode")
@@ -231,7 +254,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //endregion
 
     //region > addClass (action)
-    public static class AddClassDomainEvent extends ActionDomainEvent {}
+
 
     /**
      * Adds a {@link org.isisaddons.module.security.dom.permission.ApplicationPermission permission} for this role to a
@@ -243,7 +266,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
             semantics = SemanticsOf.NON_IDEMPOTENT
     )
     @MemberOrder(name = "Permissions", sequence = "2")
-    public ApplicationRole addClass(
+    public JdoApplicationRole addClass(
             @ParameterLayout(named="Rule")
             final ApplicationPermissionRule rule,
             @ParameterLayout(named="Mode")
@@ -285,7 +308,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //endregion
 
     //region > addAction (action)
-    public static class AddActionDomainEvent extends ActionDomainEvent {}
+
 
     /**
      * Adds a {@link org.isisaddons.module.security.dom.permission.ApplicationPermission permission} for this role to a
@@ -298,7 +321,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
             semantics = SemanticsOf.NON_IDEMPOTENT
     )
     @MemberOrder(name = "Permissions", sequence = "3")
-    public ApplicationRole addAction(
+    public JdoApplicationRole addAction(
             @ParameterLayout(named="Rule")
             final ApplicationPermissionRule rule,
             @ParameterLayout(named="Mode")
@@ -343,7 +366,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //endregion
 
     //region > addProperty (action)
-    public static class AddPropertyDomainEvent extends ActionDomainEvent {}
+
     /**
      * Adds a {@link org.isisaddons.module.security.dom.permission.ApplicationPermission permission} for this role to a
      * {@link org.isisaddons.module.security.dom.feature.ApplicationMemberType#PROPERTY property}
@@ -355,7 +378,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
             semantics = SemanticsOf.NON_IDEMPOTENT
     )
     @MemberOrder(name = "Permissions", sequence = "4")
-    public ApplicationRole addProperty(
+    public JdoApplicationRole addProperty(
             @ParameterLayout(named="Rule")
             final ApplicationPermissionRule rule,
             @ParameterLayout(named="Mode")
@@ -408,7 +431,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //endregion
 
     //region > addCollection (action)
-    public static class AddCollectionDomainEvent extends ActionDomainEvent {}
+
 
     /**
      * Adds a {@link org.isisaddons.module.security.dom.permission.ApplicationPermission permission} for this role to a
@@ -421,7 +444,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
             semantics = SemanticsOf.NON_IDEMPOTENT
     )
     @MemberOrder(name = "Permissions", sequence = "5")
-    public ApplicationRole addCollection(
+    public JdoApplicationRole addCollection(
             @ParameterLayout(named="Rule")
             final ApplicationPermissionRule rule,
             @ParameterLayout(named="Mode")
@@ -466,14 +489,14 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //endregion
 
     //region > removePermission (action)
-    public static class RemovePermissionDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent= RemovePermissionDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name = "Permissions", sequence = "9")
-    public ApplicationRole removePermission(
+    public JdoApplicationRole removePermission(
             @ParameterLayout(named="Rule")
             final ApplicationPermissionRule rule,
             @ParameterLayout(named="Type")
@@ -522,10 +545,9 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
 
     //region > users (collection)
 
-    public static class UsersDomainEvent extends CollectionDomainEvent<ApplicationUser> {}
 
-    protected SortedSet<ApplicationUser> users = new TreeSet<>();
 
+    @javax.jdo.annotations.Persistent(mappedBy = "roles")
     @Collection(
             domainEvent = UsersDomainEvent.class,
             editing = Editing.DISABLED
@@ -536,10 +558,6 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     @MemberOrder(sequence = "20")
     public SortedSet<ApplicationUser> getUsers() {
         return users;
-    }
-
-    public void setUsers(final SortedSet<ApplicationUser> users) {
-        this.users = users;
     }
 
     // necessary for integration tests
@@ -554,7 +572,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
 
     //region > addUser (action)
 
-    public static class AddUserDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = AddUserDomainEvent.class,
@@ -563,7 +581,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     @ActionLayout(
         named="Add")
     @MemberOrder(name="Users", sequence = "1")
-    public ApplicationRole addUser(final ApplicationUser applicationUser) {
+    public JdoApplicationRole addUser(final ApplicationUser applicationUser) {
         applicationUser.addRole(this);
         // no need to add to users set, since will be done by JDO/DN.
         return this;
@@ -580,7 +598,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
 
     //region > removeUser (action)
 
-    public static class RemoveUserDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = RemoveUserDomainEvent.class,
@@ -590,7 +608,7 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
             named="Remove"
     )
     @MemberOrder(name="Users", sequence = "2")
-    public ApplicationRole removeUser(final ApplicationUser applicationUser) {
+    public JdoApplicationRole removeUser(final ApplicationUser applicationUser) {
         applicationUser.removeRole(this);
         // no need to remove from users set, since will be done by JDO/DN.
         return this;
@@ -608,14 +626,14 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //endregion
 
     //region > delete (action)
-    public static class DeleteDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = DeleteDomainEvent.class,
             semantics = SemanticsOf.NON_IDEMPOTENT
     )
     @MemberOrder(sequence = "1")
-    public List<? extends ApplicationRole> delete(
+    public List<ApplicationRole> delete(
             @Parameter(optionality = Optionality.OPTIONAL)
             @ParameterLayout(named="Are you sure?")
             final Boolean areYouSure) {
@@ -655,40 +673,15 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
     //region > Functions
 
     public static class Functions {
-        protected Functions(){}
+        private Functions(){}
 
-        public static Function<ApplicationRole, String> GET_NAME = new Function<ApplicationRole, String>() {
+        public static Function<JdoApplicationRole, String> GET_NAME = new Function<JdoApplicationRole, String>() {
             @Override
-            public String apply(final ApplicationRole input) {
+            public String apply(final JdoApplicationRole input) {
                 return input.getName();
             }
         };
     }
-    //endregion
-
-    //region > equals, hashCode, compareTo, toString
-    protected final static String propertyNames = "name";
-
-    @Override
-    public int compareTo(final ApplicationRole o) {
-        return ObjectContracts.compare(this, o, propertyNames);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return ObjectContracts.equals(this, obj, propertyNames);
-    }
-
-    @Override
-    public int hashCode() {
-        return ObjectContracts.hashCode(this, propertyNames);
-    }
-
-    @Override
-    public String toString() {
-        return ObjectContracts.toString(this, propertyNames);
-    }
-
     //endregion
 
     //region  >  (injected)

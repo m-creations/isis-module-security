@@ -114,7 +114,7 @@ public class ApplicationUsers {
             hidden = Where.EVERYWHERE
     )
     @Deprecated
-    public List<ApplicationUser> findUsersByName(
+    public List<? extends ApplicationUser> findUsersByName(
             final @ParameterLayout(named="Name") String name) {
         final String nameRegex = "(?i).*" + name + ".*";
         return applicationUserRepository.find(name);
@@ -219,7 +219,7 @@ public class ApplicationUsers {
             hidden = Where.EVERYWHERE
     )
     @Deprecated
-    public List<ApplicationUser> allUsers() {
+    public List<? extends ApplicationUser> allUsers() {
         return applicationUserRepository.allUsers();
     }
     //endregion

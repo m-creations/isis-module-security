@@ -21,11 +21,23 @@ import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+
+
+
+
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+
 import org.apache.isis.applib.DomainObjectContainer;
 import org.apache.isis.applib.annotation.Action;
 import org.apache.isis.applib.annotation.ActionLayout;
+import org.apache.isis.applib.annotation.BookmarkPolicy;
 import org.apache.isis.applib.annotation.Collection;
 import org.apache.isis.applib.annotation.CollectionLayout;
+import org.apache.isis.applib.annotation.DomainObject;
+import org.apache.isis.applib.annotation.DomainObjectLayout;
 import org.apache.isis.applib.annotation.Editing;
 import org.apache.isis.applib.annotation.MemberGroupLayout;
 import org.apache.isis.applib.annotation.MemberOrder;
@@ -43,6 +55,7 @@ import org.apache.isis.applib.security.UserMemento;
 import org.apache.isis.applib.services.HasUsername;
 import org.apache.isis.applib.util.ObjectContracts;
 import org.apache.isis.applib.value.Password;
+
 import org.isisaddons.module.security.SecurityModule;
 import org.isisaddons.module.security.dom.password.PasswordEncryptionService;
 import org.isisaddons.module.security.dom.permission.ApplicationPermission;
@@ -54,34 +67,12 @@ import org.isisaddons.module.security.dom.role.ApplicationRoleRepository;
 import org.isisaddons.module.security.dom.tenancy.ApplicationTenancy;
 import org.isisaddons.module.security.seed.scripts.IsisModuleSecurityAdminRoleAndPermissions;
 import org.isisaddons.module.security.seed.scripts.IsisModuleSecurityAdminUser;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
-
 @MemberGroupLayout(columnSpans = {4,4,4,12},
     left = {"Id", "Name"},
     middle= {"Contact Details"},
     right= {"Status", "Tenancy"}
 )
-public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername {
-
-    public static abstract class PropertyDomainEvent<T> extends SecurityModule.PropertyDomainEvent<ApplicationUser, T> {}
-
-    public static abstract class CollectionDomainEvent<T> extends SecurityModule.CollectionDomainEvent<ApplicationUser, T> {}
-
-    public static abstract class ActionDomainEvent extends SecurityModule.ActionDomainEvent<ApplicationUser> {}
-
-    // //////////////////////////////////////
-
-    //region > constants
-    public static final int MAX_LENGTH_USERNAME = 30;
-    public static final int MAX_LENGTH_FAMILY_NAME = 50;
-    public static final int MAX_LENGTH_GIVEN_NAME = 50;
-    public static final int MAX_LENGTH_KNOWN_AS = 20;
-    public static final int MAX_LENGTH_EMAIL_ADDRESS = 50;
-    public static final int MAX_LENGTH_PHONE_NUMBER = 25;
-    //endregion
+public class LdapApplicationUser extends ApplicationUser {
 
     //region > identification
 
@@ -97,7 +88,8 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > name (derived property)
 
-    public static class NameDomainEvent extends PropertyDomainEvent<String> {}
+
+
 
     @Property(
             domainEvent = NameDomainEvent.class,
@@ -127,9 +119,9 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > username (property)
 
-    public static class UsernameDomainEvent extends PropertyDomainEvent<String> {}
 
-    protected String username;
+
+
 
     @Property(
             domainEvent = UsernameDomainEvent.class,
@@ -143,22 +135,19 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return username;
     }
 
-    public void setUsername(final String username) {
-        this.username = username;
-    }
 
     //endregion
 
     //region > updateUsername (action)
 
-    public static class UpdateUsernameDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateUsernameDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="username", sequence = "1")
-    public ApplicationUser updateUsername(
+    public LdapApplicationUser updateUsername(
             @Parameter(maxLength = MAX_LENGTH_USERNAME)
             @ParameterLayout(named="Username")
             final String username) {
@@ -173,9 +162,9 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > familyName (property)
 
-    public static class FamilyNameDomainEvent extends PropertyDomainEvent<String> {}
 
-    protected String familyName;
+
+
 
     @Property(
             domainEvent = FamilyNameDomainEvent.class,
@@ -189,16 +178,13 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return familyName;
     }
 
-    public void setFamilyName(final String familyName) {
-        this.familyName = familyName;
-    }
+
     //endregion
 
     //region > givenName (property)
 
-    public static class GivenNameDomainEvent extends PropertyDomainEvent<String> {}
 
-    protected String givenName;
+
 
     @Property(
             domainEvent = GivenNameDomainEvent.class,
@@ -212,16 +198,13 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return givenName;
     }
 
-    public void setGivenName(final String givenName) {
-        this.givenName = givenName;
-    }
+
     //endregion
 
     //region > knownAs (property)
 
-    public static class KnownAsDomainEvent extends PropertyDomainEvent<String> {}
 
-    protected String knownAs;
+
 
     @Property(
             domainEvent = KnownAsDomainEvent.class,
@@ -235,21 +218,19 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return knownAs;
     }
 
-    public void setKnownAs(final String knownAs) {
-        this.knownAs = knownAs;
-    }
+  
     //endregion
 
     //region > updateName (action)
 
-    public static class UpdateNameDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateNameDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="knownAs", sequence = "1")
-    public ApplicationUser updateName(
+    public LdapApplicationUser updateName(
             @Parameter(maxLength = MAX_LENGTH_FAMILY_NAME, optionality = Optionality.OPTIONAL)
             @ParameterLayout(named="Family Name")
             final String familyName,
@@ -295,10 +276,9 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > emailAddress (property)
 
-    public static class EmailAddressDomainEvent extends PropertyDomainEvent<String> {}
 
 
-    protected String emailAddress;
+
 
     @Property(
             domainEvent = EmailAddressDomainEvent.class,
@@ -309,22 +289,19 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return emailAddress;
     }
 
-    public void setEmailAddress(final String emailAddress) {
-        this.emailAddress = emailAddress;
-    }
 
     //endregion
 
     //region > updateEmailAddress (action)
 
-    public static class UpdateEmailAddressDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateEmailAddressDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="emailAddress", sequence = "1")
-    public ApplicationUser updateEmailAddress(
+    public LdapApplicationUser updateEmailAddress(
             @Parameter(maxLength = MAX_LENGTH_EMAIL_ADDRESS)
             @ParameterLayout(named="Email")
             final String emailAddress) {
@@ -343,9 +320,8 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > phoneNumber (property)
 
-    public static class PhoneNumberDomainEvent extends PropertyDomainEvent<String> {}
 
-    protected String phoneNumber;
+
 
     @Property(
             domainEvent = PhoneNumberDomainEvent.class,
@@ -356,22 +332,18 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return phoneNumber;
     }
 
-    public void setPhoneNumber(final String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
     //endregion
 
     //region > phoneNumber (property)
 
-    public static class UpdatePhoneNumberDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdatePhoneNumberDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="phoneNumber", sequence = "1")
-    public ApplicationUser updatePhoneNumber(
+    public LdapApplicationUser updatePhoneNumber(
             @ParameterLayout(named="Phone")
             @Parameter(maxLength = MAX_LENGTH_PHONE_NUMBER, optionality = Optionality.OPTIONAL)
             final String phoneNumber) {
@@ -390,10 +362,10 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > faxNumber (property)
 
-    public static class FaxNumberDomainEvent extends PropertyDomainEvent<String> {}
 
 
-    protected String faxNumber;
+
+
 
     @Property(
             domainEvent = FaxNumberDomainEvent.class,
@@ -407,22 +379,19 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return faxNumber;
     }
 
-    public void setFaxNumber(final String faxNumber) {
-        this.faxNumber = faxNumber;
-    }
 
     //endregion
 
     //region > updateFaxNumber (action)
 
-    public static class UpdateFaxNumberDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateFaxNumberDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="faxNumber", sequence = "1")
-    public ApplicationUser updateFaxNumber(
+    public LdapApplicationUser updateFaxNumber(
             @Parameter(maxLength = MAX_LENGTH_PHONE_NUMBER, optionality = Optionality.OPTIONAL)
             @ParameterLayout(named="Fax")
             final String faxNumber) {
@@ -442,9 +411,9 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > tenancy (property)
 
-    public static class TenancyDomainEvent extends PropertyDomainEvent<ApplicationTenancy> {}
 
-    protected ApplicationTenancy tenancy;
+
+
 
     @Property(
             domainEvent = TenancyDomainEvent.class,
@@ -455,22 +424,18 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return tenancy;
     }
 
-    public void setTenancy(final ApplicationTenancy tenancy) {
-        this.tenancy = tenancy;
-    }
-
     //endregion
 
     //region > updateTenancy (action)
 
-    public static class UpdateTenancyDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateTenancyDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="tenancy", sequence = "1")
-    public ApplicationUser updateTenancy(
+    public LdapApplicationUser updateTenancy(
             @Parameter(optionality = Optionality.OPTIONAL)
             final ApplicationTenancy tenancy) {
         setTenancy(tenancy);
@@ -484,9 +449,9 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > accountType (property)
 
-    public static class AccountTypeDomainEvent extends PropertyDomainEvent<AccountType> {}
 
-    protected AccountType accountType;
+
+
 
     @Property(
             domainEvent = AccountTypeDomainEvent.class,
@@ -497,22 +462,20 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return accountType;
     }
 
-    public void setAccountType(final AccountType accountType) {
-        this.accountType = accountType;
-    }
+
 
     //endregion
 
     //region > updateAccountType (action)
 
-    public static class UpdateAccountTypeDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdateAccountTypeDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name = "Account Type", sequence = "1")
-    public ApplicationUser updateAccountType(
+    public LdapApplicationUser updateAccountType(
             final AccountType accountType) {
         setAccountType(accountType);
         return this;
@@ -526,21 +489,14 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return getAccountType();
     }
 
-    protected boolean isDelegateAccountOrPasswordEncryptionNotAvailable() {
-        return !isLocalAccountWithPasswordEncryptionAvailable();
-    }
-
-    protected boolean isLocalAccountWithPasswordEncryptionAvailable() {
-        return getAccountType() == AccountType.LOCAL && passwordEncryptionService != null;
-    }
-
+    
     //endregion
 
     //region > status (property), visible (action), usable (action)
 
-    public static class StatusDomainEvent extends PropertyDomainEvent<ApplicationUserStatus> {}
 
-    protected ApplicationUserStatus status;
+
+
 
     @Property(
             domainEvent = StatusDomainEvent.class,
@@ -551,15 +507,11 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
         return status;
     }
 
-    public void setStatus(final ApplicationUserStatus status) {
-        this.status = status;
-    }
-
     //endregion
 
     //region > unlock (action)
 
-    public static class UnlockDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UnlockDomainEvent.class,
@@ -567,7 +519,7 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
     )
     @ActionLayout(named="Enable") // symmetry with lock (disable)
     @MemberOrder(name = "Status", sequence = "1")
-    public ApplicationUser unlock() {
+    public LdapApplicationUser unlock() {
         setStatus(ApplicationUserStatus.ENABLED);
         return this;
     }
@@ -579,7 +531,7 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > lock (action)
 
-    public static class LockDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = LockDomainEvent.class,
@@ -587,7 +539,7 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
     )
     @ActionLayout(named="Disable") // method cannot be called 'disable' as that would clash with Isis' naming conventions
     @MemberOrder(name = "Status", sequence = "2")
-    public ApplicationUser lock() {
+    public LdapApplicationUser lock() {
         setStatus(ApplicationUserStatus.DISABLED);
         return this;
     }
@@ -602,26 +554,20 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > encryptedPassword (hidden property)
 
-    protected String encryptedPassword;
-
     @PropertyLayout(hidden=Where.EVERYWHERE)
     public String getEncryptedPassword() {
         return encryptedPassword;
     }
 
-    public void setEncryptedPassword(final String encryptedPassword) {
-        this.encryptedPassword = encryptedPassword;
-    }
 
-    public boolean hideEncryptedPassword() {
-        return isDelegateAccountOrPasswordEncryptionNotAvailable();
-    }
+
+
     //endregion
 
 
     //region > hasPassword (derived property)
 
-    public static class HasPasswordDomainEvent extends PropertyDomainEvent<Boolean> {}
+
 
     @Property(
             domainEvent = HasPasswordDomainEvent.class,
@@ -640,14 +586,14 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > updatePassword (action)
 
-    public static class UpdatePasswordDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent = UpdatePasswordDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="hasPassword", sequence = "10")
-    public ApplicationUser updatePassword(
+    public LdapApplicationUser updatePassword(
             @ParameterLayout(named="Existing password")
             final Password existingPassword,
             @ParameterLayout(named="New password")
@@ -715,14 +661,14 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //region > resetPassword (action)
 
-    public static class ResetPasswordDomainEvent extends ActionDomainEvent {}
+
 
     @Action(
             domainEvent =ResetPasswordDomainEvent.class,
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="hasPassword", sequence = "20")
-    public ApplicationUser resetPassword(
+    public LdapApplicationUser resetPassword(
             @ParameterLayout(named="New password")
             final Password newPassword,
             @ParameterLayout(named="Repeat password")
@@ -762,12 +708,7 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
 
     //endregion
 
-   
-
     //region > delete (action)
-
-    public static class DeleteDomainEvent extends ActionDomainEvent {}
-
     @Action(
             domainEvent = DeleteDomainEvent.class,
             semantics = SemanticsOf.NON_IDEMPOTENT
@@ -801,7 +742,7 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
     //region > PermissionSet (programmatic)
 
     // short-term caching
-    protected transient ApplicationPermissionValueSet cachedPermissionSet;
+    private transient ApplicationPermissionValueSet cachedPermissionSet;
     @Programmatic
     public ApplicationPermissionValueSet getPermissionSet() {
         if(cachedPermissionSet != null) {
@@ -848,30 +789,6 @@ public class ApplicationUser implements Comparable<ApplicationUser>, HasUsername
     }
     //endregion
 
-    //region > equals, hashCode, compareTo, toString
-    protected final static String propertyNames = "username";
-
-    @Override
-    public int compareTo(final ApplicationUser o) {
-        return ObjectContracts.compare(this, o, propertyNames);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return ObjectContracts.equals(this, obj, propertyNames);
-    }
-
-    @Override
-    public int hashCode() {
-        return ObjectContracts.hashCode(this, propertyNames);
-    }
-
-    @Override
-    public String toString() {
-        return ObjectContracts.toString(this, propertyNames);
-    }
-
-    //endregion
 
     //region  >  (injected)
     @javax.inject.Inject

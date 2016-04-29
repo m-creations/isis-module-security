@@ -17,7 +17,7 @@ public class ApplicationTenancyTest {
         public void exercise() throws Exception {
             PojoTester.relaxed()
                     .withFixture(FixtureDatumFactories.tenancies())
-                    .exercise(new ApplicationTenancy());
+                    .exercise(new JdoApplicationTenancy());
         }
     }
 

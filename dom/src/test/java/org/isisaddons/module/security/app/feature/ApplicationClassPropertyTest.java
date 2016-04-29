@@ -94,7 +94,7 @@ public class ApplicationClassPropertyTest {
 
             context.checking(new Expectations() {{
                 oneOf(mockApplicationFeature).getReturnTypeName();
-                will(returnValue("ApplicationUser"));
+                will(returnValue("JdoApplicationUser"));
             }});
 
             assertThat(applicationClassProperty.hideMaxLength(), is(true));
@@ -133,7 +133,7 @@ public class ApplicationClassPropertyTest {
 
             context.checking(new Expectations() {{
                 oneOf(mockApplicationFeature).getReturnTypeName();
-                will(returnValue("ApplicationUser"));
+                will(returnValue("JdoApplicationUser"));
             }});
 
             assertThat(applicationClassProperty.hideTypicalLength(), is(true));

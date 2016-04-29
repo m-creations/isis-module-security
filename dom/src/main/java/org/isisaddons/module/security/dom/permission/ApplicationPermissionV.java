@@ -18,8 +18,19 @@ package org.isisaddons.module.security.dom.permission;
 
 import java.util.Comparator;
 
+import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.IdentityType;
+import javax.jdo.annotations.InheritanceStrategy;
+import javax.jdo.annotations.VersionStrategy;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Ordering;
+
 import org.apache.isis.applib.DomainObjectContainer;
 import org.apache.isis.applib.annotation.Action;
+import org.apache.isis.applib.annotation.BookmarkPolicy;
+import org.apache.isis.applib.annotation.DomainObject;
+import org.apache.isis.applib.annotation.DomainObjectLayout;
 import org.apache.isis.applib.annotation.Editing;
 import org.apache.isis.applib.annotation.MemberGroupLayout;
 import org.apache.isis.applib.annotation.MemberOrder;
@@ -30,8 +41,11 @@ import org.apache.isis.applib.annotation.Programmatic;
 import org.apache.isis.applib.annotation.Property;
 import org.apache.isis.applib.annotation.PropertyLayout;
 import org.apache.isis.applib.annotation.SemanticsOf;
+import org.apache.isis.applib.annotation.ViewModel;
+import org.apache.isis.applib.annotation.ViewModelLayout;
 import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.applib.util.ObjectContracts;
+
 import org.isisaddons.module.security.SecurityModule;
 import org.isisaddons.module.security.dom.feature.ApplicationFeature;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureId;
@@ -39,10 +53,6 @@ import org.isisaddons.module.security.dom.feature.ApplicationFeatureRepository;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureType;
 import org.isisaddons.module.security.dom.feature.ApplicationMemberType;
 import org.isisaddons.module.security.dom.role.ApplicationRole;
-import org.isisaddons.module.security.dom.role.JdoApplicationRole;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Ordering;
 
 /**
  * Specifies how a particular {@link #getRole() application role} may interact with a specific
@@ -73,24 +83,88 @@ import com.google.common.collect.Ordering;
  * </p>
  */
 @SuppressWarnings("UnusedDeclaration")
-
+/*@javax.jdo.annotations.PersistenceCapable(
+        identityType = IdentityType.DATASTORE,
+        schema = "isissecurity",
+        table = "ApplicationPermission")
+@javax.jdo.annotations.Inheritance(
+        strategy = InheritanceStrategy.NEW_TABLE)
+@javax.jdo.annotations.DatastoreIdentity(
+        strategy = IdGeneratorStrategy.NATIVE, column = "id")
+@javax.jdo.annotations.Version(
+        strategy = VersionStrategy.VERSION_NUMBER,
+        column = "version")
+@javax.jdo.annotations.Queries( {
+        @javax.jdo.annotations.Query(
+                name = "findByRole", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.permission.ApplicationPermission "
+                        + "WHERE role == :role"),
+        @javax.jdo.annotations.Query(
+                name = "findByUser", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.permission.ApplicationPermission "
+                        + "WHERE (u.roles.contains(role) && u.username == :username) "
+                        + "VARIABLES org.isisaddons.module.security.dom.user.ApplicationUser u"),
+        @javax.jdo.annotations.Query(
+                name = "findByFeature", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.permission.ApplicationPermission "
+                        + "WHERE featureType == :featureType "
+                        + "   && featureFqn == :featureFqn"),
+        @javax.jdo.annotations.Query(
+                name = "findByRoleAndRuleAndFeature", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.permission.ApplicationPermission "
+                        + "WHERE role == :role "
+                        + "   && rule == :rule "
+                        + "   && featureType == :featureType "
+                        + "   && featureFqn == :featureFqn "),
+        @javax.jdo.annotations.Query(
+                name = "findByRoleAndRuleAndFeatureType", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.permission.ApplicationPermission "
+                        + "WHERE role == :role "
+                        + "   && rule == :rule "
+                        + "   && featureType == :featureType "),
+})
+@javax.jdo.annotations.Uniques({
+        @javax.jdo.annotations.Unique(
+                name = "ApplicationPermission_role_feature_rule_UNQ", members = { "role", "featureType", "featureFqn", "rule" })
+})
+@DomainObject(
+        objectType = "isissecurity.ApplicationPermission"
+)
+@DomainObjectLayout(
+        bookmarking = BookmarkPolicy.AS_CHILD
+)
+@MemberGroupLayout(
+        columnSpans = {3,3,6,12},
+        left="Role",
+        middle = "Permissions",
+        right="Feature"
+)*/
+@ViewModel
+@ViewModelLayout(
+        bookmarking = BookmarkPolicy.AS_CHILD
+)
 @MemberGroupLayout(
         columnSpans = {3,3,6,12},
         left="Role",
         middle = "Permissions",
         right="Feature"
 )
-public class ApplicationPermission implements Comparable<ApplicationPermission> {
+public class ApplicationPermissionV implements Comparable<ApplicationPermissionV> {
 
-    public static abstract class PropertyDomainEvent<T> extends SecurityModule.PropertyDomainEvent<ApplicationPermission, T> {}
+    public static abstract class PropertyDomainEvent<T> extends SecurityModule.PropertyDomainEvent<ApplicationPermissionV, T> {}
 
-    public static abstract class CollectionDomainEvent<T> extends SecurityModule.CollectionDomainEvent<ApplicationPermission, T> {}
+    public static abstract class CollectionDomainEvent<T> extends SecurityModule.CollectionDomainEvent<ApplicationPermissionV, T> {}
 
-    public static abstract class ActionDomainEvent extends SecurityModule.ActionDomainEvent<ApplicationPermission> {}
+    public static abstract class ActionDomainEvent extends SecurityModule.ActionDomainEvent<ApplicationPermissionV> {}
 
     // //////////////////////////////////////
 
-    protected static final int TYPICAL_LENGTH_TYPE = 7;  // ApplicationFeatureType.PACKAGE is longest
+    private static final int TYPICAL_LENGTH_TYPE = 7;  // ApplicationFeatureType.PACKAGE is longest
 
     //region > identification
     /**
@@ -132,23 +206,23 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
     public static class RoleDomainEvent extends PropertyDomainEvent<ApplicationRole> {}
 
 
-    protected JdoApplicationRole role;
+    private ApplicationRole role;
 
-
-/*    @Property(
+//    @javax.jdo.annotations.Column(name = "roleId", allowsNull="false")
+    @Property(
             domainEvent = RoleDomainEvent.class,
             editing = Editing.DISABLED
     )
     @PropertyLayout(
             hidden=Where.REFERENCES_PARENT
     )
-    @MemberOrder(name="Role", sequence = "1")*/
+    @MemberOrder(name="Role", sequence = "1")
     public ApplicationRole getRole() {
         return role;
     }
 
     public void setRole(final ApplicationRole role) {
-        this.role = (JdoApplicationRole) role;
+        this.role = role;
     }
 
     //endregion
@@ -161,12 +235,12 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name="Role", sequence = "1")
-    public ApplicationPermission updateRole(final ApplicationRole applicationRole) {
+    public ApplicationPermissionV updateRole(final ApplicationRole applicationRole) {
         setRole(applicationRole);
         return this;
     }
 
-    public ApplicationRole default0UpdateRole() {
+    public ApplicationRole xdefault0UpdateRole() {
         return getRole();
     }
 
@@ -175,9 +249,9 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
     //region > rule (property)
     public static class RuleDomainEvent extends PropertyDomainEvent<ApplicationPermissionRule> {}
 
-    protected ApplicationPermissionRule rule;
+    private ApplicationPermissionRule rule;
 
-
+//    @javax.jdo.annotations.Column(allowsNull="false")
     @Property(
             domainEvent = RuleDomainEvent.class,
             editing = Editing.DISABLED
@@ -201,7 +275,7 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name = "Rule", sequence = "1")
-    public ApplicationPermission allow() {
+    public ApplicationPermissionV allow() {
         setRule(ApplicationPermissionRule.ALLOW);
         return this;
     }
@@ -219,7 +293,7 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name = "Rule", sequence = "1")
-    public ApplicationPermission veto() {
+    public ApplicationPermissionV veto() {
         setRule(ApplicationPermissionRule.VETO);
         return this;
     }
@@ -232,9 +306,9 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
     //region > mode (property)
     public static class ModeDomainEvent extends PropertyDomainEvent<ApplicationPermissionMode> {}
 
-    protected ApplicationPermissionMode mode;
+    private ApplicationPermissionMode mode;
 
-
+//    @javax.jdo.annotations.Column(allowsNull="false")
     @Property(
             domainEvent = ModeDomainEvent.class,
             editing = Editing.DISABLED
@@ -259,7 +333,7 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name = "Mode", sequence = "1")
-    public ApplicationPermission viewing() {
+    public ApplicationPermissionV viewing() {
         setMode(ApplicationPermissionMode.VIEWING);
         return this;
     }
@@ -278,7 +352,7 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
             semantics = SemanticsOf.IDEMPOTENT
     )
     @MemberOrder(name = "Mode", sequence = "2")
-    public ApplicationPermission changing() {
+    public ApplicationPermissionV changing() {
         setMode(ApplicationPermissionMode.CHANGING);
         return this;
     }
@@ -289,7 +363,7 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
 
     //region > featureId (derived property)
 
-    protected ApplicationFeatureId getFeatureId() {
+    private ApplicationFeatureId getFeatureId() {
         if(getFeatureType() == null) {
             return null;
         }
@@ -315,7 +389,7 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
             domainEvent = TypeDomainEvent.class,
             editing = Editing.DISABLED
     )
-    @PropertyLayout(typicalLength=ApplicationPermission.TYPICAL_LENGTH_TYPE)
+    @PropertyLayout(typicalLength=ApplicationPermissionV.TYPICAL_LENGTH_TYPE)
     @MemberOrder(name="Feature", sequence = "5")
     public String getType() {
         final Enum<?> e = getFeatureType() != ApplicationFeatureType.MEMBER ? getFeatureType() : getMemberType();
@@ -323,7 +397,7 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
     }
 
     @Programmatic
-    protected ApplicationMemberType getMemberType() {
+    private ApplicationMemberType getMemberType() {
         final ApplicationFeature feature = getFeature();
         return feature != null? feature.getMemberType(): null;
     }
@@ -331,8 +405,8 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
 
     //region > featureType
 
-
-    protected ApplicationFeatureType featureType;
+//    @javax.jdo.annotations.Column(allowsNull="false")
+    private ApplicationFeatureType featureType;
 
     /**
      * The {@link org.isisaddons.module.security.dom.feature.ApplicationFeatureId#getType() feature type} of the
@@ -357,8 +431,8 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
 
     //region > featureFqn
 
-
-    protected String featureFqn;
+//    @javax.jdo.annotations.Column(allowsNull="false")
+    private String featureFqn;
 
     /**
      * The {@link org.isisaddons.module.security.dom.feature.ApplicationFeatureId#getFullyQualifiedName() fully qualified name}
@@ -407,10 +481,10 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
     //endregion
     
     //region > equals, hashCode, compareTo, toString
-    protected final static String propertyNames = "role, featureType, featureFqn, mode";
+    private final static String propertyNames = "role, featureType, featureFqn, mode";
 
     @Override
-    public int compareTo(final ApplicationPermission other) {
+    public int compareTo(final ApplicationPermissionV other) {
         return ObjectContracts.compare(this, other, propertyNames);
     }
 
@@ -429,9 +503,9 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
         return ObjectContracts.toString(this, propertyNames);
     }
 
-    public static class DefaultComparator implements Comparator<ApplicationPermission> {
+    public static class DefaultComparator implements Comparator<ApplicationPermissionV> {
         @Override
-        public int compare(final ApplicationPermission o1, final ApplicationPermission o2) {
+        public int compare(final ApplicationPermissionV o1, final ApplicationPermissionV o2) {
             return Ordering.natural().compare(o1, o2);
         }
     }
@@ -443,17 +517,17 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
 
         private Functions(){}
 
-        public static final Function<ApplicationPermission, ApplicationPermissionValue> AS_VALUE = new Function<ApplicationPermission, ApplicationPermissionValue>() {
+        public static final Function<ApplicationPermissionV, ApplicationPermissionValue> AS_VALUE = new Function<ApplicationPermissionV, ApplicationPermissionValue>() {
             @Override
-            public ApplicationPermissionValue apply(final ApplicationPermission input) {
+            public ApplicationPermissionValue apply(final ApplicationPermissionV input) {
                 return new ApplicationPermissionValue(input.getFeatureId(), input.getRule(), input.getMode());
             }
         };
 
 
-        public static final Function<ApplicationPermission, String> GET_FQN = new Function<ApplicationPermission, String>() {
+        public static final Function<ApplicationPermissionV, String> GET_FQN = new Function<ApplicationPermissionV, String>() {
             @Override
-            public String apply(final ApplicationPermission input) {
+            public String apply(final ApplicationPermissionV input) {
                 return input.getFeatureFqn();
             }
         };
