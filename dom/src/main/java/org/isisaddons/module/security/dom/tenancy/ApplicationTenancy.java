@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.InheritanceStrategy;
@@ -57,6 +58,7 @@ import org.isisaddons.module.security.dom.user.ApplicationUserRepository;
         identityType = IdentityType.APPLICATION,
         schema = "isissecurity",
         table = "ApplicationTenancy")
+@Extension(vendorName = "datanucleus", key = "datastore", value = "store-security")
 @javax.jdo.annotations.Inheritance(
         strategy = InheritanceStrategy.NEW_TABLE)
 @javax.jdo.annotations.DatastoreIdentity(
@@ -69,6 +71,10 @@ import org.isisaddons.module.security.dom.user.ApplicationUserRepository;
                 name = "ApplicationTenancy_name_UNQ", members = { "name" })
 })
 @javax.jdo.annotations.Queries( {
+        @javax.jdo.annotations.Query(
+                name = "findAll", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.tenancy.ApplicationTenancy "),
         @javax.jdo.annotations.Query(
                 name = "findByPath", language = "JDOQL",
                 value = "SELECT "
