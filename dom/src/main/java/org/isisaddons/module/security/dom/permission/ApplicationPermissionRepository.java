@@ -270,7 +270,10 @@ public class ApplicationPermissionRepository {
     //region > allPermission (action)
     @Programmatic
     public List<ApplicationPermission> allPermissions() {
-        return container.allInstances(ApplicationPermission.class);
+        return container.allMatches(
+                new QueryDefault<>(
+                        ApplicationPermission.class, "findAll"));
+//        return container.allInstances(ApplicationPermission.class);
     }
     //endregion
 

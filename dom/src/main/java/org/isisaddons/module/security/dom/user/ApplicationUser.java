@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.InheritanceStrategy;
@@ -77,6 +78,7 @@ import lombok.Setter;
         identityType = IdentityType.DATASTORE,
         schema = "isissecurity",
         table = "ApplicationUser")
+@Extension(vendorName = "datanucleus", key = "datastore", value = "store-security")
 @javax.jdo.annotations.Inheritance(
         strategy = InheritanceStrategy.NEW_TABLE)
 @javax.jdo.annotations.DatastoreIdentity(
@@ -90,10 +92,14 @@ import lombok.Setter;
 })
 @javax.jdo.annotations.Queries( {
         @javax.jdo.annotations.Query(
+                name = "findAll", language = "JDOQL",
+                value = "SELECT "
+                        + "FROM org.isisaddons.module.security.dom.user.ApplicationUser "),
+        @javax.jdo.annotations.Query(
                 name = "findByUsername", language = "JDOQL",
                 value = "SELECT "
                         + "FROM org.isisaddons.module.security.dom.user.ApplicationUser "
-                        + "WHERE username == :username"),
+                        + "WHERE username == :username"),        
         @javax.jdo.annotations.Query(
             name = "findByEmailAddress", language = "JDOQL",
             value = "SELECT "

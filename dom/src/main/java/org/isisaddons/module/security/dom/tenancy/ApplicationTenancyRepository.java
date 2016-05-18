@@ -31,6 +31,7 @@ import org.apache.isis.applib.annotation.Programmatic;
 import org.apache.isis.applib.annotation.SemanticsOf;
 import org.apache.isis.applib.query.QueryDefault;
 import org.apache.isis.applib.services.queryresultscache.QueryResultsCache;
+import org.isisaddons.module.security.dom.permission.ApplicationPermission;
 
 @DomainService(
         nature = NatureOfService.DOMAIN,
@@ -141,7 +142,10 @@ public class ApplicationTenancyRepository {
 
     @Programmatic
     public List<ApplicationTenancy> allTenanciesNoCache() {
-        return container.allInstances(ApplicationTenancy.class);
+        return container.allMatches(
+                new QueryDefault<>(
+                        ApplicationTenancy.class, "findAll"));
+//        return container.allInstances(ApplicationTenancy.class);
     }
 
     //endregion
