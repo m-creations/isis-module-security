@@ -158,6 +158,9 @@ public class ApplicationUserMenu {
     public ApplicationRole default3NewLocalUser() {
         return applicationRoleRepository.findByNameCached(IsisModuleSecurityRegularUserRoleAndPermissions.ROLE_NAME);
     }
+    public List<ApplicationRole> choices3NewLocalUser() {
+       return applicationRoleRepository.allRoles();
+   }
     //endregion
 
     //region > allUsers

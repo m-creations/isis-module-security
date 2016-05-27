@@ -17,6 +17,7 @@
 package org.isisaddons.module.security.dom.permission;
 
 import java.util.Comparator;
+import java.util.List;
 
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -52,6 +53,7 @@ import org.isisaddons.module.security.dom.feature.ApplicationFeatureRepository;
 import org.isisaddons.module.security.dom.feature.ApplicationFeatureType;
 import org.isisaddons.module.security.dom.feature.ApplicationMemberType;
 import org.isisaddons.module.security.dom.role.ApplicationRole;
+import org.isisaddons.module.security.dom.role.ApplicationRoleRepository;
 
 /**
  * Specifies how a particular {@link #getRole() application role} may interact with a specific
@@ -237,6 +239,10 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
     public ApplicationRole default0UpdateRole() {
         return getRole();
     }
+    
+    public List<ApplicationRole> choices0UpdateRole() {
+       return applicationRoleRepository.allRoles();
+   }
 
     //endregion
 
@@ -535,6 +541,9 @@ public class ApplicationPermission implements Comparable<ApplicationPermission> 
 
     @javax.inject.Inject
     ApplicationFeatureRepository applicationFeatureRepository;
+
+    @javax.inject.Inject
+    ApplicationRoleRepository applicationRoleRepository;
 
     //endregion
 
