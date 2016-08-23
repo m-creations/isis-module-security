@@ -112,6 +112,9 @@ public class ApplicationUserMenu {
     public ApplicationRole default1NewDelegateUser() {
         return applicationRoleRepository.findByNameCached(IsisModuleSecurityRegularUserRoleAndPermissions.ROLE_NAME);
     }
+    public List<ApplicationRole> choices1NewDelegateUser() {
+       return applicationRoleRepository.allRoles();
+    }
     //endregion
 
     //region > newLocalUser (action)
@@ -160,7 +163,7 @@ public class ApplicationUserMenu {
     }
     public List<ApplicationRole> choices3NewLocalUser() {
        return applicationRoleRepository.allRoles();
-   }
+    }
     //endregion
 
     //region > allUsers
