@@ -117,9 +117,9 @@ public class ApplicationRole implements Comparable<ApplicationRole> {
 
     //region > constants
 
-    public static final int MAX_LENGTH_NAME = 700;
-    public static final int TYPICAL_LENGTH_NAME = 700;
-    public static final int TYPICAL_LENGTH_DESCRIPTION = 700;
+    public static final int MAX_LENGTH_NAME = 255;
+    public static final int TYPICAL_LENGTH_NAME = 255;
+    public static final int TYPICAL_LENGTH_DESCRIPTION = 255;
     //endregion
 
     //region > identification
